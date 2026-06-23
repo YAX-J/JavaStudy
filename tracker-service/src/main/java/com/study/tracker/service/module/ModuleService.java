@@ -12,6 +12,7 @@ import com.study.tracker.model.vo.TopicBrief;
 import com.study.tracker.model.vo.TopicDetailVO;
 import com.study.tracker.service.module.mapper.ModuleMapper;
 import com.study.tracker.service.module.mapper.TopicMapper;
+import com.study.tracker.service.note.NoteService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
@@ -31,9 +32,11 @@ import java.util.stream.Collectors;
 public class ModuleService extends ServiceImpl<ModuleMapper, Module> {
 
     private final TopicMapper topicMapper;
+    private final NoteService noteService;
 
-    public ModuleService(TopicMapper topicMapper) {
+    public ModuleService(TopicMapper topicMapper, NoteService noteService) {
         this.topicMapper = topicMapper;
+        this.noteService = noteService;
     }
 
     /**
@@ -82,7 +85,7 @@ public class ModuleService extends ServiceImpl<ModuleMapper, Module> {
         vo.setStatusChangeCount(topic.getStatusChangeCount());
         vo.setLastReviewAt(topic.getLastReviewAt());
         vo.setNextReviewAt(topic.getNextReviewAt());
-        // 笔记留到 M3 填充
+        vo.setRecentNotes(noteService.listBriefByTopic(id));
         return vo;
     }
 
@@ -128,9 +131,4 @@ public class ModuleService extends ServiceImpl<ModuleMapper, Module> {
     }
 
     private TopicBrief toBrief(Topic t) {
-        TopicBrief b = new TopicBrief();
-        b.setId(t.getId());
-        b.setTitle(t.getTitle());
-        b.setDifficulty(t.getDifficulty());
-        b.setPriority(t.getPriority());
-   
+    
