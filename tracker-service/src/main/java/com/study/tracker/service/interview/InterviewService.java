@@ -7,6 +7,7 @@ import com.study.tracker.model.dto.AiConfigReq;
 import com.study.tracker.model.dto.CreateSessionReq;
 import com.study.tracker.model.dto.SubmitAnswerReq;
 import com.study.tracker.model.entity.*;
+import com.study.tracker.model.entity.Module;
 import com.study.tracker.model.vo.*;
 import com.study.tracker.service.interview.ai.AiProvider;
 import com.study.tracker.service.interview.ai.ClaudeProvider;
@@ -138,7 +139,9 @@ public class InterviewService extends ServiceImpl<InterviewSessionMapper, Interv
 
         // 更新会话统计
         session.setQuestionCount(session.getQuestionCount() + 1);
-        if (session.getTotalScore() == null) session.setTotalScore(BigDecimal.ZERO);
+        if (session.getTotalScore() == null) {
+            session.setTotalScore(BigDecimal.ZERO);
+        }
         if (aiResult.score != null) {
             session.setTotalScore(session.getTotalScore().add(BigDecimal.valueOf(aiResult.score)));
         }
@@ -157,7 +160,9 @@ public class InterviewService extends ServiceImpl<InterviewSessionMapper, Interv
     @Transactional
     public void skipQuestion(Long sessionId) {
         InterviewSession session = getById(sessionId);
-        if (session == null || session.getStatus() == 1) throw new BizException(400, "会话不存在或已结束");
+        if (session == null || session.getStatus() == 1) {
+            throw new BizException(400, "会话不存在或已结束");
+        }
 
         InterviewMessage skipMsg = new InterviewMessage();
         skipMsg.setSessionId(sessionId);
@@ -178,7 +183,9 @@ public class InterviewService extends ServiceImpl<InterviewSessionMapper, Interv
     @Transactional
     public InterviewReportVO endSession(Long sessionId) {
         InterviewSession session = getById(sessionId);
-        if (session == null) throw new BizException(400, "会话不存在");
+        if (session == null) {
+            throw new BizException(400, "会话不存在");
+        }
 
         session.setStatus(1);
         session.setEndedAt(LocalDateTime.now());
@@ -190,7 +197,9 @@ public class InterviewService extends ServiceImpl<InterviewSessionMapper, Interv
 
     public InterviewReportVO getReport(Long sessionId) {
         InterviewSession session = getById(sessionId);
-        if (session == null) throw new BizException(400, "会话不存在");
+        if (session == null) {
+            throw new BizException(400, "会话不存在");
+        }
         List<InterviewMessage> history = messageMapper.selectBySession(sessionId);
         return generateReport(session, history);
     }
@@ -215,8 +224,12 @@ public class InterviewService extends ServiceImpl<InterviewSessionMapper, Interv
     public void saveAiConfig(AiConfigReq req) {
         // 先停用所有
         List<AiConfig> all = aiConfigMapper.selectList(null);
-        for (AiConfig c : all) c.setIsActive(0);
-        for (AiConfig c : all) aiConfigMapper.updateById(c);
+        for (AiConfig c : all) {
+            c.setIsActive(0);
+        }
+        for (AiConfig c : all) {
+            aiConfigMapper.updateById(c);
+        }
 
         // 保存新配置
         AiConfig config = new AiConfig();
@@ -273,7 +286,7 @@ public class InterviewService extends ServiceImpl<InterviewSessionMapper, Interv
 
     private InterviewReportVO generateReport(InterviewSession session, List<InterviewMessage> history) {
         List<Map<String, String>> messages = new ArrayList<>();
-        messages.add(Map.of("role", "system", """
+        messages.add(Map.of("role", "system", "content", """
             你是大厂面试复盘专家。根据以下面试记录生成报告，格式为JSON：
             {"overall":"总体评价","scores":[{"question":"题","answer":"答","score":8,"feedback":"..."}],
             "weakTopics":["薄弱点1","薄弱点2"],"suggestions":"复习建议","estimate":"评估（一面通过/二面通过/拿offer）"}
@@ -308,7 +321,7 @@ public class InterviewService extends ServiceImpl<InterviewSessionMapper, Interv
             default -> "中级（原理+实践）";
         };
 
-        return new ArrayList<>(List.of(Map.of("role", "system", """
+        return new ArrayList<>(List.of(Map.of("role", "system", "content", """
             你是字节跳动/阿里巴巴的Java后端面试官。面试特点：基础问得深、项目问得细、出场景题考察举一反三。
 
             考察范围：%s
@@ -334,7 +347,9 @@ public class InterviewService extends ServiceImpl<InterviewSessionMapper, Interv
 
     private String callAi(List<Map<String, String>> messages, boolean stream) {
         AiConfig config = aiConfigMapper.selectActive();
-        if (config == null) throw new BizException(400, "请先配置AI");
+        if (config == null) {
+            throw new BizException(400, "请先配置AI");
+        }
 
         AiProvider provider = switch (config.getProvider().toLowerCase()) {
             case "claude" -> claudeProvider;
@@ -352,7 +367,9 @@ public class InterviewService extends ServiceImpl<InterviewSessionMapper, Interv
             if (resp != null) {
                 // 尝试解析评分（简单正则）
                 java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d+)\\s*分").matcher(resp);
-                if (m.find()) r.score = Integer.parseInt(m.group(1));
+                if (m.find()) {
+                    r.score = Integer.parseInt(m.group(1));
+                }
                 r.feedback = resp.length() > 200 ? resp.substring(0, 200) : resp;
             }
         } catch (Exception e) {
@@ -402,17 +419,4 @@ public class InterviewService extends ServiceImpl<InterviewSessionMapper, Interv
             log.error("解析报告失败", e);
             vo.setOverall("报告生成失败");
             vo.setSuggestions("请重试");
-            vo.setEstimate("无法评估");
-            vo.setScores(new ArrayList<>());
-            vo.setWeakTopics(new ArrayList<>());
-        }
-        return vo;
-    }
-
-    // ==================== 内部类 ====================
-
-    static class AiResult {
-        Integer score;
-        String feedback;
-    }
-}
+            vo.setEstimate("无法评估")

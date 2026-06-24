@@ -1,5 +1,6 @@
 package com.study.tracker.service.stats;
 
+import com.study.tracker.model.vo.*;
 import com.study.tracker.service.stats.mapper.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
@@ -164,7 +165,9 @@ public class StatsService {
     private int calcGlobalStreak() {
         LocalDate start = LocalDate.now().minusMonths(6);
         List<DailyMinutesRow> rows = statsMapper.selectDailyMinutes(start);
-        if (rows.isEmpty()) return 0;
+        if (rows.isEmpty()) {
+            return 0;
+        }
 
         // 按日期从近到远排，计算从今天往回连续的天数
         int streak = 0;
@@ -186,6 +189,4 @@ public class StatsService {
     }
 
     private LocalDate getSunday() {
-        return LocalDate.now().with(DayOfWeek.SUNDAY);
-    }
-}
+  
