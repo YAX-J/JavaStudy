@@ -176,7 +176,8 @@ public class CodingExerciseService extends ServiceImpl<CodingExerciseMapper, Cod
         cmd.add("--memory=256m");
         cmd.add("--cpus=0.5");
         cmd.add("-v");
-        cmd.add(workDir.toString() + ":/code:ro");
+        cmd.add(workDir.toString() + ":/code");
+        cmd.add("--tmpfs=/tmp:exec");
         cmd.add("openjdk:17-slim");
         cmd.add("sh");
         cmd.add("-c");
@@ -266,6 +267,4 @@ public class CodingExerciseService extends ServiceImpl<CodingExerciseMapper, Cod
     static class ProcessResult {
         int exitCode;
         String stdout = "";
-        String stderr = "";
-    }
-}
+ 

@@ -18,7 +18,6 @@ import com.study.tracker.service.interview.mapper.InterviewSessionMapper;
 import com.study.tracker.service.module.mapper.ModuleMapper;
 import com.study.tracker.service.module.mapper.TopicMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -185,6 +184,13 @@ public class InterviewService extends ServiceImpl<InterviewSessionMapper, Interv
         session.setEndedAt(LocalDateTime.now());
         updateById(session);
 
+        List<InterviewMessage> history = messageMapper.selectBySession(sessionId);
+        return generateReport(session, history);
+    }
+
+    public InterviewReportVO getReport(Long sessionId) {
+        InterviewSession session = getById(sessionId);
+        if (session == null) throw new BizException(400, "会话不存在");
         List<InterviewMessage> history = messageMapper.selectBySession(sessionId);
         return generateReport(session, history);
     }
@@ -393,14 +399,4 @@ public class InterviewService extends ServiceImpl<InterviewSessionMapper, Interv
                 }
             }
         } catch (Exception e) {
-            log.error("面试报告解析失败", e);
-            vo.setOverall(resp != null ? resp.substring(0, Math.min(500, resp.length())) : "报告生成失败");
-        }
-        return vo;
-    }
-
-    static class AiResult {
-        Integer score;
-        String feedback;
-    }
-}
+            log.

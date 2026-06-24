@@ -147,6 +147,10 @@ public class PlanService extends ServiceImpl<PlanMapper, Plan> {
     // ==================== 打卡日历 ====================
 
     public CalendarVO getCalendar(Long planId, String month) {
+        // 参数校验
+        if (month == null || !month.matches("\\d{4}-\\d{2}")) {
+            throw new BizException(400, "月份格式错误，请使用 yyyy-MM 格式");
+        }
         // month: 2026-06
         LocalDate start = LocalDate.parse(month + "-01");
         LocalDate end = start.plusMonths(1).minusDays(1);
@@ -179,9 +183,11 @@ public class PlanService extends ServiceImpl<PlanMapper, Plan> {
         List<LocalDate> recentDates = checkInMapper.selectRecentDates(planId);
         if (recentDates.isEmpty()) return 0;
 
+        // selectRecentDates 返回的是 ORDER BY check_date DESC（最新在前）
+        // 所以 recentDates[0] 是最新的打卡日期
         int streak = 1;
-        for (int i = 1; i < recentDates.size(); i++) {
-            long diff = ChronoUnit.DAYS.between(recentDates.get(i), recentDates.get(i - 1));
+        for (int i = 0; i < recentDates.size() - 1; i++) {
+            long diff = ChronoUnit.DAYS.between(recentDates.get(i + 1), recentDates.get(i));
             if (diff == 1) {
                 streak++;
             } else {
@@ -230,14 +236,5 @@ public class PlanService extends ServiceImpl<PlanMapper, Plan> {
         vo.setTotalTopics(allItems.size());
         Integer maxDay = allItems.stream().mapToInt(PlanItemWithTopic::getDayNumber).max().orElse(0);
         vo.setTotalDays(maxDay);
-        vo.setCurrentDay((int) ChronoUnit.DAYS.between(plan.getCreatedAt().toLocalDate(), LocalDate.now()) + 1);
-
-        // 已完成打卡数（去重 topic）
-        List<CheckIn> checkIns = checkInMapper.selectByPlanAndMonth(plan.getId(),
-                plan.getCreatedAt().toLocalDate(), LocalDate.now());
-        long completed = checkIns.stream().map(CheckIn::getTopicId).distinct().count();
-        vo.setCompletedTopics((int) completed);
-
-        return vo;
-    }
-}
+        int diffDays = (int) ChronoUnit.DAYS.between(plan.getCreatedAt().toLocalDate(), LocalDate.now());
+        vo.setCurrentDay(Math.max(1,

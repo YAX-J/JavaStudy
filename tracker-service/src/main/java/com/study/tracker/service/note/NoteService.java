@@ -78,7 +78,7 @@ public class NoteService extends ServiceImpl<NoteMapper, Note> {
             return baseMapper.searchFulltext(keyword).stream()
                     .map(this::toDetail)
                     .collect(Collectors.toList());
-        } catch (Exception e) {
+        } catch (org.springframework.dao.DataAccessException e) {
             log.debug("全文搜索不可用，降级为 LIKE 查询");
             return baseMapper.searchLike(keyword).stream()
                     .map(this::toDetail)
@@ -108,7 +108,4 @@ public class NoteService extends ServiceImpl<NoteMapper, Note> {
         vo.setTitle(n.getTitle());
         vo.setContent(n.getContent());
         vo.setCreatedAt(n.getCreatedAt());
-        vo.setUpdatedAt(n.getUpdatedAt());
-        return vo;
-    }
-}
+        vo.setUpdatedAt(n.getUpdated
