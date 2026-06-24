@@ -131,4 +131,15 @@ public class ModuleService extends ServiceImpl<ModuleMapper, Module> {
     }
 
     private TopicBrief toBrief(Topic t) {
-    
+        TopicBrief b = new TopicBrief();
+        b.setId(t.getId());
+        b.setTitle(t.getTitle());
+        b.setDifficulty(t.getDifficulty());
+        b.setPriority(t.getPriority());
+        b.setStatus(t.getStatus());
+        b.setMasteryLevel(t.getMasteryLevel());
+        b.setLastReviewAt(t.getLastReviewAt());
+        b.setNextReviewAt(t.getNextReviewAt());
+        return b;
+    }
+}
