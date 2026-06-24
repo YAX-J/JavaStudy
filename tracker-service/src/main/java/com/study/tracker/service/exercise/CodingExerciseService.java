@@ -27,13 +27,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-/**
- * 在线代码练习服务
- *
- * 通过 Docker 容器沙箱执行用户提交的 Java 代码，
- * 超时 10 秒自动 kill，限制内存 256M，无网络权限。
- * Docker 不可用时自动降级为本地执行（仅限信任环境）。
- */
 @Slf4j
 @Service
 public class CodingExerciseService extends ServiceImpl<CodingExerciseMapper, CodingExercise> {
@@ -47,45 +40,33 @@ public class CodingExerciseService extends ServiceImpl<CodingExerciseMapper, Cod
         this.submissionMapper = submissionMapper;
     }
 
-    /**
-     * 某知识点下的练习列表
-     */
     public List<ExerciseVO> listByTopic(Long topicId) {
         return baseMapper.selectByTopic(topicId).stream()
                 .map(this::toVO)
                 .collect(Collectors.toList());
     }
 
-    /**
-     * 练习详情
-     */
     public ExerciseVO getDetail(Long id) {
         CodingExercise ex = getById(id);
         if (ex == null) throw new BizException(404, "练习不存在");
         return toVO(ex);
     }
 
-    /**
-     * 运行代码
-     */
     @Transactional
     public CodeRunResultVO runCode(CodeRunReq req) {
         CodingExercise exercise = getById(req.getExerciseId());
         if (exercise == null) throw new BizException(404, "练习不存在");
 
         String userCode = req.getCode();
-        // 拼装完整类：模板代码 + 用户代码，包装进一个可编译的 Main 类
         String fullCode = buildFullCode(userCode);
 
-        // 写入临时文件
         String runId = IdUtil.fastSimpleUUID();
         Path workDir = Path.of("/tmp/coding", runId);
         FileUtil.mkdir(workDir.toFile());
         FileUtil.writeUtf8String(fullCode, workDir.resolve("Main.java").toFile());
 
-        // 执行代码
         CodeRunResultVO result = new CodeRunResultVO();
-        result.setSubmissionId(null); // 稍后填入
+        result.setSubmissionId(null);
 
         long startMs = System.currentTimeMillis();
         ProcessResult proc;
@@ -109,7 +90,6 @@ public class CodingExerciseService extends ServiceImpl<CodingExerciseMapper, Cod
         result.setErrorMessage(proc.stderr);
         result.setPassed(proc.exitCode == 0 && proc.stderr.isEmpty());
 
-        // 保存提交记录
         CodingSubmission submission = new CodingSubmission();
         submission.setExerciseId(req.getExerciseId());
         submission.setUserCode(userCode);
@@ -121,14 +101,10 @@ public class CodingExerciseService extends ServiceImpl<CodingExerciseMapper, Cod
 
         result.setSubmissionId(submission.getId());
 
-        // 清理临时文件
         FileUtil.del(workDir.toFile());
         return result;
     }
 
-    /**
-     * 提交历史
-     */
     public List<SubmissionVO> listSubmissions(Long exerciseId) {
         return submissionMapper.selectByExercise(exerciseId).stream()
                 .map(s -> {
@@ -144,14 +120,7 @@ public class CodingExerciseService extends ServiceImpl<CodingExerciseMapper, Cod
                 .collect(Collectors.toList());
     }
 
-    // ==================== 内部方法 ====================
-
-    /**
-     * 包装可编译的完整 Java 类
-     */
     private String buildFullCode(String userCode) {
-        // 简单策略：把用户代码包进一个 Main 类
-        // 如果用户已经写了 class 声明，直接使用；否则包装
         if (userCode.contains("class ")) {
             return userCode;
         }
@@ -164,9 +133,6 @@ public class CodingExerciseService extends ServiceImpl<CodingExerciseMapper, Cod
         """.formatted(userCode);
     }
 
-    /**
-     * Docker 沙箱执行
-     */
     private ProcessResult runInDocker(Path workDir) throws Exception {
         List<String> cmd = new ArrayList<>();
         cmd.add("docker");
@@ -182,15 +148,10 @@ public class CodingExerciseService extends ServiceImpl<CodingExerciseMapper, Cod
         cmd.add("sh");
         cmd.add("-c");
         cmd.add("cd /code && javac Main.java && java -Xmx128m Main");
-
         return execute(cmd);
     }
 
-    /**
-     * 本地执行（Docker 不可用时的降级方案）
-     */
     private ProcessResult runLocally(Path workDir) throws Exception {
-        // 先编译
         ProcessBuilder compilePb = new ProcessBuilder("javac", "Main.java");
         compilePb.directory(workDir.toFile());
         Process compileProc = compilePb.start();
@@ -204,7 +165,6 @@ public class CodingExerciseService extends ServiceImpl<CodingExerciseMapper, Cod
             return r;
         }
 
-        // 再运行
         ProcessBuilder runPb = new ProcessBuilder("java", "-Xmx128m", "Main");
         runPb.directory(workDir.toFile());
         Process runProc = runPb.start();
@@ -270,4 +230,3 @@ public class CodingExerciseService extends ServiceImpl<CodingExerciseMapper, Cod
         String stderr = "";
     }
 }
-                                                       
