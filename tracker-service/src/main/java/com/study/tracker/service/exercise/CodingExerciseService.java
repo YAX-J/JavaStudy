@@ -156,12 +156,13 @@ public class CodingExerciseService extends ServiceImpl<CodingExerciseMapper, Cod
             return userCode;
         }
         return """
-                public class Main {
-                    public static void main(String[] args) {
-                        %s
-                    }
-                }
-                """.formatted(userCode);
+        """
+        public class Main {
+            public static void main(String[] args) {
+                %s
+            }
+        }
+        """.formatted(userCode);
     }
 
     /**
@@ -270,3 +271,4 @@ public class CodingExerciseService extends ServiceImpl<CodingExerciseMapper, Cod
         String stderr = "";
     }
 }
+                                    
