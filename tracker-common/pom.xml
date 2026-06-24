@@ -11,8 +11,7 @@
     <artifactId>tracker-common</artifactId>
     <dependencies>
         <dependency>
-            <groupId>cn.hutool</groupId>
-            <artifactId>hutool-all</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
-    </dependencies>
-</project>
+   
