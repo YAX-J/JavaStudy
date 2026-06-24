@@ -108,4 +108,7 @@ public class NoteService extends ServiceImpl<NoteMapper, Note> {
         vo.setTitle(n.getTitle());
         vo.setContent(n.getContent());
         vo.setCreatedAt(n.getCreatedAt());
-        vo.setUpdatedAt(n.getUpdated
+        vo.setUpdatedAt(n.getUpdatedAt());
+        return vo;
+    }
+}

@@ -1,0 +1,28 @@
+# Maven
+target/
+*.jar
+*.war
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# SSH Keys (do not commit)
+.ssh/
+
+# Logs
+*.log
+logs/
+
+# Temp
+*.tmp
+*.swp
+
+# Node
+node_modules/
+dist/

@@ -16,7 +16,7 @@
     <version>1.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Study Tracker</name>
-    <description>备战大厂的学习追踪系统</description>
+    <description>学习追踪系统</description>
 
     <modules>
         <module>tracker-common</module>

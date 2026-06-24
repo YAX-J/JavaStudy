@@ -267,4 +267,6 @@ public class CodingExerciseService extends ServiceImpl<CodingExerciseMapper, Cod
     static class ProcessResult {
         int exitCode;
         String stdout = "";
- 
+        String stderr = "";
+    }
+}

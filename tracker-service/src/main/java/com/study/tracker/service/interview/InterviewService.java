@@ -399,4 +399,20 @@ public class InterviewService extends ServiceImpl<InterviewSessionMapper, Interv
                 }
             }
         } catch (Exception e) {
-            log.
+            log.error("解析报告失败", e);
+            vo.setOverall("报告生成失败");
+            vo.setSuggestions("请重试");
+            vo.setEstimate("无法评估");
+            vo.setScores(new ArrayList<>());
+            vo.setWeakTopics(new ArrayList<>());
+        }
+        return vo;
+    }
+
+    // ==================== 内部类 ====================
+
+    static class AiResult {
+        Integer score;
+        String feedback;
+    }
+}

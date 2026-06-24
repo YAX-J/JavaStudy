@@ -237,4 +237,8 @@ public class PlanService extends ServiceImpl<PlanMapper, Plan> {
         Integer maxDay = allItems.stream().mapToInt(PlanItemWithTopic::getDayNumber).max().orElse(0);
         vo.setTotalDays(maxDay);
         int diffDays = (int) ChronoUnit.DAYS.between(plan.getCreatedAt().toLocalDate(), LocalDate.now());
-        vo.setCurrentDay(Math.max(1,
+        vo.setCurrentDay(Math.max(1, diffDays + 1));
+
+        return vo;
+    }
+}
